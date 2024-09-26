@@ -9,7 +9,7 @@ cd $heir_dir
 # Set the directory containing the MLIR files
 mlir_dir=/home/ubuntu/simplemlir
 
-# Function to print step name with or without figlet
+# Function to print a "header" (with or without figlet) to stdout
 print_step_name() {
     local step_name="$1"
     if command -v figlet &> /dev/null; then
@@ -23,6 +23,20 @@ print_step_name() {
         echo
     fi
 }
+
+# The following functions are used to run the heir-opt and heir-translate commands
+# example run_heir_opt call:
+# run_heir_opt "canonicalize" \
+#   "--canonicalize" \
+#   "in.mlir" \
+#   "out.mlir"
+# run_heir_translate is similar to run_heir_opt, but it also takes an extension argument
+# example run_heir_translate call:
+# run_heir_translate "emit openfhe" \
+#   "--emit-openfhe-pke" \
+#   "in.mlir" \
+#   "out" \
+#   "cpp"
 
 # Function to run heir-opt command
 run_heir_opt() {
@@ -57,14 +71,12 @@ run_heir_translate() {
     }
 }
 
-# example run_heir_opt call:
-# run_heir_opt "canonicalize" \
-#   "--canonicalize" \
-#   "in.mlir" \
-#   "out.mlir"
-
-# 1) Convert TOSA to Arith
-run_heir_opt "tosa 2 arith" \
+#  _          _                       _   
+# | |__   ___(_)_ __       ___  _ __ | |_ 
+# | '_ \ / _ \ | '__|____ / _ \| '_ \| __|
+# | | | |  __/ | | |_____| (_) | |_) | |_ 
+# |_| |_|\___|_|_|        \___/| .__/ \__|
+run_heir_opt "to arith" \
   "--heir-tosa-to-arith" \
   "00_tosa.matmul" \
   "01_matmul"
@@ -79,12 +91,17 @@ run_heir_opt "secretize" \
   "02_canonicalize" \
   "03_secretize"
 
-run_heir_opt "mlir 2 openfhe" \
+run_heir_opt "to openfhe" \
   "--secret-to-bgv" \
   "03_secretize" \
   "04_mlir_openfhe"
 
-# 4) Translate to OpenFHE C++ code
+#  _          _           _                       _       _       
+# | |__   ___(_)_ __     | |_ _ __ __ _ _ __  ___| | __ _| |_ ___ 
+# | '_ \ / _ \ | '__|____| __| '__/ _` | '_ \/ __| |/ _` | __/ _ \
+# | | | |  __/ | | |_____| |_| | | (_| | | | \__ \ | (_| | ||  __/
+# |_| |_|\___|_|_|        \__|_|  \__,_|_| |_|___/_|\__,_|\__\___|
+
 run_heir_translate "emit openfhe" \
   "--emit-openfhe-pke" \
   "04_mlir_openfhe" \
