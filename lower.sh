@@ -24,49 +24,38 @@ print_step_name() {
     fi
 }
 
-# The following functions are used to run the heir-opt and heir-translate commands
-# example run_heir_opt call:
-# run_heir_opt "canonicalize" \
-#   "--canonicalize" \
-#   "in.mlir" \
-#   "out.mlir"
-# run_heir_translate is similar to run_heir_opt, but it also takes an extension argument
-# example run_heir_translate call:
-# run_heir_translate "emit openfhe" \
-#   "--emit-openfhe-pke" \
-#   "in.mlir" \
-#   "out" \
-#   "cpp"
-
-# Function to run heir-opt command
-run_heir_opt() {
+# Function to run heir command (opt or translate)
+#
+# This function executes a specified heir command (either 'opt' or 'translate')
+# with given options on an input file and saves the output to a specified output
+# file.
+#
+# Arguments:
+#   $1 (step_name): A string describing the current step (used for logging)
+#   $2 (command): The heir command to run ('opt' or 'translate')
+#   $3 (options): Command-line options to pass to the heir command
+#   $4 (input_file): The name of the input file (relative to $mlir_dir)
+#   $5 (output_file): The name of the output file (relative to $mlir_dir)
+#
+# Output:
+#   Writes the command output to the specified output file.
+#   Prints step name using print_step_name function.
+#   In case of error, prints an error message and exits with status code 2.
+run_heir() {
     local step_name="$1"
-    local options="$2"
-    local input_num="$3"
-    local output_num="$4"
+    local command="$2"
+    local options="$3"
+    local input_file="$4"
+    local output_file="$5"
 
     print_step_name "$step_name"
     {
-        bazel run //tools:heir-opt -- $options ${mlir_dir}/${input_num}.mlir > ${mlir_dir}/${output_num}.mlir
+        bazel run //tools:heir-$command -- \
+          $options \
+          ${mlir_dir}/${input_file} \
+          > ${mlir_dir}/${output_file}
     } || {
-        echo "ERROR ($step_name): failed to heir-opt $options"
-        exit 2
-    }
-}
-
-# Function to run heir-translate command
-run_heir_translate() {
-    local step_name="$1"
-    local options="$2"
-    local input_num="$3"
-    local output_num="$4"
-    local extension="$5"
-
-    print_step_name "$step_name"
-    {
-        bazel run //tools:heir-translate -- $options ${mlir_dir}/${input_num}.mlir > ${mlir_dir}/${output_num}.${extension}
-    } || {
-        echo "ERROR ($step_name): failed to heir-translate $options"
+        echo "ERROR ($step_name): failed to run heir-$command $options"
         exit 2
     }
 }
@@ -76,25 +65,31 @@ run_heir_translate() {
 # | '_ \ / _ \ | '__|____ / _ \| '_ \| __|
 # | | | |  __/ | | |_____| (_) | |_) | |_ 
 # |_| |_|\___|_|_|        \___/| .__/ \__|
-run_heir_opt "to arith" \
+#                              |_|
+
+run_heir "to arith" \
+  "opt" \
   "--heir-tosa-to-arith" \
-  "00_tosa.matmul" \
-  "01_matmul"
+  "00_matmul.tosa" \
+  "01_matmul.mlir"
 
-run_heir_opt "canonicalize" \
+run_heir "canonicalize" \
+  "opt" \
   "--canonicalize" \
-  "01_matmul" \
-  "02_canonicalize"
+  "01_matmul.mlir" \
+  "02_canonicalize.mlir"
 
-run_heir_opt "secretize" \
+run_heir "secretize" \
+  "opt" \
   "--secretize --wrap-generic" \
-  "02_canonicalize" \
-  "03_secretize"
+  "02_canonicalize.mlir" \
+  "03_secretize.mlir"
 
-run_heir_opt "to openfhe" \
+run_heir "to openfhe" \
+  "opt" \
   "--secret-to-bgv" \
-  "03_secretize" \
-  "04_mlir_openfhe"
+  "03_secretize.mlir" \
+  "04_mlir_openfhe.mlir"
 
 #  _          _           _                       _       _       
 # | |__   ___(_)_ __     | |_ _ __ __ _ _ __  ___| | __ _| |_ ___ 
@@ -102,15 +97,16 @@ run_heir_opt "to openfhe" \
 # | | | |  __/ | | |_____| |_| | | (_| | | | \__ \ | (_| | ||  __/
 # |_| |_|\___|_|_|        \__|_|  \__,_|_| |_|___/_|\__,_|\__\___|
 
-run_heir_translate "emit openfhe" \
+run_heir "emit openfhe" \
+  "translate" \
   "--emit-openfhe-pke" \
-  "04_mlir_openfhe" \
-  "05_emit_openfhe" \
-  "C"
-run_heir_translate "emit openfhe header" \
+  "04_mlir_openfhe.mlir" \
+  "05_emit_openfhe.cpp" \
+
+run_heir "emit openfhe header" \
+  "translate" \
   "--emit-openfhe-pke-header" \
-  "04_mlir_openfhe" \
-  "04_emit_openfhe" \
-  "h"
+  "04_mlir_openfhe.mlir" \
+  "04_emit_openfhe.h" \
 
 cd $cwd
