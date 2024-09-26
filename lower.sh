@@ -9,6 +9,21 @@ cd $heir_dir
 # Set the directory containing the MLIR files
 mlir_dir=/home/ubuntu/simplemlir
 
+# Function to print step name with or without figlet
+print_step_name() {
+    local step_name="$1"
+    if command -v figlet &> /dev/null; then
+        figlet "$step_name"
+    else
+        local line=$(printf "%0.s-" $(seq 1 ${#step_name}))
+        echo
+        echo "$line"
+        echo "$step_name"
+        echo "$line"
+        echo
+    fi
+}
+
 # Function to run heir-opt command
 run_heir_opt() {
     local step_name="$1"
@@ -16,8 +31,7 @@ run_heir_opt() {
     local input_num="$3"
     local output_num="$4"
 
-    echo -e "\n\n\n"
-    figlet "$step_name"
+    print_step_name "$step_name"
     {
         bazel run //tools:heir-opt -- $options ${mlir_dir}/${input_num}.mlir > ${mlir_dir}/${output_num}.mlir
     } || {
@@ -34,8 +48,7 @@ run_heir_translate() {
     local output_num="$4"
     local extension="$5"
 
-    echo -e "\n\n\n"
-    figlet "$step_name"
+    print_step_name "$step_name"
     {
         bazel run //tools:heir-translate -- $options ${mlir_dir}/${input_num}.mlir > ${mlir_dir}/${output_num}.${extension}
     } || {
