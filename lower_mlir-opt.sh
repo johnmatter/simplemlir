@@ -31,11 +31,18 @@ mlir-opt \
   $mlir_dir/00_matmul.tosa \
   > $mlir_dir/01_tensor_linalg.mlir
 
-print_step_name "heir-opt"
-print_step_name "to openfhe-bgv "
+print_step_name "heir-opt secretize"
+bazel run //tools:heir-opt -- \
+  --secretize \
+  --wrap-generic \
+  $mlir_dir/01_tensor_linalg.mlir \
+  > $mlir_dir/02_secretize.mlir \
+  2> $mlir_dir/02.err
+
+print_step_name "heir-opt to openfhe-bgv"
 degree=4
 bazel run //tools:heir-opt -- \
   --mlir-to-openfhe-bgv="entry-function=main ciphertext-degree=$degree" \
-  $mlir_dir/01_tensor_linalg.mlir \
-  > $mlir_dir/02.mlir \
-  2> $mlir_dir/02.err
+  $mlir_dir/02_secretize.mlir \
+  > $mlir_dir/03_openfhe.mlir \
+  2> $mlir_dir/03.err
