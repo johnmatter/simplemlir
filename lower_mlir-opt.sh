@@ -33,8 +33,9 @@ mlir-opt \
 
 print_step_name "heir-opt"
 print_step_name "to openfhe-bgv "
-  bazel run //tools:heir-opt -- \
-    --mlir-to-openfhe-bgv="entry-function=main ciphertext-degree=$degree" \
-    $mlir_dir/01_tensor_linalg.mlir \
-    > $mlir_dir/02.mlir \
-    2> $mlir_dir/02.err
+degree=4
+bazel run //tools:heir-opt -- \
+  --mlir-to-openfhe-bgv="entry-function=main ciphertext-degree=$degree" \
+  $mlir_dir/01_tensor_linalg.mlir \
+  > $mlir_dir/02.mlir \
+  2> $mlir_dir/02.err
