@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# parse arguments
+input_mlir="$1"
+
 # Remember the current working directory
 cwd=$(pwd)
 
@@ -28,11 +32,13 @@ print_step_name "mlir-opt"
 print_step_name "lower tosa"
 mlir-opt \
   --pass-pipeline='builtin.module(func.func(tosa-to-linalg-named, tosa-to-tensor, convert-linalg-to-affine-loops))' \
-  $mlir_dir/00_matmul.tosa \
+  ${mlir_dir}/${input_mlir} \
   > $mlir_dir/01_tensor_linalg.mlir
 
 print_step_name "heir-opt secretize"
-bazel run //tools:heir-opt -- \
+bazel run \
+  --action_env=CC=$(which gcc) \
+  //tools:heir-opt -- \
   --secretize \
   --wrap-generic \
   $mlir_dir/01_tensor_linalg.mlir \
@@ -41,8 +47,11 @@ bazel run //tools:heir-opt -- \
 
 print_step_name "heir-opt to openfhe-bgv"
 degree=4
-bazel run //tools:heir-opt -- \
-  --mlir-to-openfhe-bgv="entry-function=main ciphertext-degree=$degree" \
+bazel run \
+  --action_env=CC=$(which gcc) \
+  //tools:heir-opt -- \
+  --secret-to-bgv \
   $mlir_dir/02_secretize.mlir \
   > $mlir_dir/03_openfhe.mlir \
   2> $mlir_dir/03.err
+  # --canonicalize \ # --mlir-to-openfhe-bgv="entry-function=main ciphertext-degree=$degree" \

@@ -1,0 +1,38 @@
+{
+    "passes": [
+        {
+            "name": "mlir-opt",
+            "command": "mlir-opt",
+            "args": [
+                "--pass-pipeline='builtin.module(func.func(tosa-to-linalg-named, tosa-to-tensor, convert-linalg-to-affine-loops))'",
+                "{working_dir}/{input_mlir}",
+                "> {working_dir}/01_tensor_linalg.mlir"
+            ]
+        },
+        {
+            "name": "heir-opt secretize",
+            "command": "bazel run",
+            "args": [
+                "--action_env=CC=$(which gcc)",
+                "//tools:heir-opt --",
+                "--secretize",
+                "--wrap-generic",
+                "{working_dir}/01_tensor_linalg.mlir",
+                "> {working_dir}/02_secretize.mlir",
+                "2> {working_dir}/02.err"
+            ]
+        },
+        {
+            "name": "heir-opt to openfhe-bgv",
+            "command": "bazel run",
+            "args": [
+                "--action_env=CC=$(which gcc)",
+                "//tools:heir-opt --",
+                "--secret-to-bgv",
+                "{working_dir}/02_secretize.mlir",
+                "> {working_dir}/03_openfhe.mlir",
+                "2> {working_dir}/03.err"
+            ]
+        }
+    ]
+}
