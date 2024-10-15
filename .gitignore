@@ -1,3 +1,4 @@
 *.mlir
+*.err
 *.cpp
 *.h
