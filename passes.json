@@ -1,10 +1,24 @@
 {
     "passes": [
         {
-            "name": "mlir-opt",
+            "name": "lower tosa",
             "command": "mlir-opt",
             "args": [
-                "--pass-pipeline='builtin.module(func.func(tosa-to-linalg-named, tosa-to-tensor, convert-linalg-to-affine-loops))'"
+                "--pass-pipeline='builtin.module(func.func(tosa-to-linalg-named, tosa-to-tensor))'"
+            ]
+        },
+        {
+            "name": "linalg generalize named ops",
+            "command": "mlir-opt",
+            "args": [
+                "--pass-pipeline='builtin.module(func.func(linalg-generalize-named-ops))'"
+            ]
+        },
+        {
+            "name": "linalg to loops",
+            "command": "mlir-opt",
+            "args": [
+                "--pass-pipeline='builtin.module(func.func(convert-linalg-to-affine-loops))'"
             ]
         },
         {
@@ -14,7 +28,10 @@
                 "--action_env=CC=$(which gcc)",
                 "//tools:heir-opt --",
                 "--secretize",
-                "--wrap-generic"
+                "--wrap-generic",
+                "--canonicalize",
+                "--cse",
+                "--heir-simd-vectorizer"
             ]
         },
         {
