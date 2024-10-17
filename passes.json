@@ -15,10 +15,10 @@
             ]
         },
         {
-            "name": "linalg to loops",
+            "name": "linalg magic",
             "command": "mlir-opt",
             "args": [
-                "--pass-pipeline='builtin.module(func.func(convert-linalg-to-affine-loops))'"
+                "--pass-pipeline='builtin.module(func.func(linalg-fold-unit-extent-dims{use-rank-reducing-slices},cse))'"
             ]
         },
         {
@@ -28,10 +28,7 @@
                 "--action_env=CC=$(which gcc)",
                 "//tools:heir-opt --",
                 "--secretize",
-                "--wrap-generic",
-                "--canonicalize",
-                "--cse",
-                "--heir-simd-vectorizer"
+                "--wrap-generic"
             ]
         },
         {
