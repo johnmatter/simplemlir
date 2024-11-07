@@ -6,7 +6,8 @@
             "args": [
                 "--action_env=CC=$(which gcc)",
                 "//tools:heir-opt --",
-                "--secretize"
+                "--secretize",
+                "--wrap-generic"
             ]
         },
         {
