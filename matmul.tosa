@@ -1,0 +1,7 @@
+func.func @main(%arg0: tensor<2x2xi32>, %arg1: tensor<2x2xi32>) -> tensor<2x2xi32> {
+    %lhs_3D = tosa.reshape %arg0 {new_shape = array<i64 : 1, 2, 2>} : (tensor<2x2xi32>) -> tensor<1x2x2xi32>
+    %rhs_3D = tosa.reshape %arg1 {new_shape = array<i64 : 1, 2, 2>} : (tensor<2x2xi32>) -> tensor<1x2x2xi32>
+    %2 = tosa.matmul %lhs_3D, %rhs_3D : (tensor<1x2x2xi32>, tensor<1x2x2xi32>) -> tensor<1x2x2xi32>
+    %3 = tosa.reshape %2 {new_shape = array<i64 : 2, 2>}  : (tensor<1x2x2xi32>) -> tensor<2x2xi32>
+    return %3 : tensor<2x2xi32>
+}
