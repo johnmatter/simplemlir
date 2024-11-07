@@ -2,6 +2,7 @@ import json
 import subprocess
 import os
 import pdb
+import argparse
 
 def print_step_name(step_name):
     try:
@@ -30,17 +31,25 @@ def get_absolute_path(path):
     return path if os.path.isabs(path) else os.path.abspath(path)
 
 def main():
-    # Run clean.sh
-    subprocess.run('rm -f 0*err 0*mlir', shell=True, check=True)
+    # argparse stuff
+    parser = argparse.ArgumentParser(description='Lower a program written in MLIR dialects using the passes specified in a json file')
+    parser.add_argument('input_mlir', type=str, help='The input MLIR file to lower', default='input.mlir')
+    parser.add_argument('--passes', type=str, help='The passes to use', default='passes.json')
+    parser.add_argument('--clean', type=bool, help='Clean the working directory. This deletes the output files of the previous run, which will start with 01, 02, .... Be careful.', default=False, const=True, nargs='?')
+    args = parser.parse_args()
+
+    # clean
+    if args.clean:
+        subprocess.run('rm -f 0*err 0*mlir', shell=True, check=True)
 
     # Load the JSON file
-    with open('passes.json', 'r') as f:
+    with open(args.passes, 'r') as f:
         passes = json.load(f)['passes']
 
     # Set directories
     heir_dir = get_absolute_path('/home/ubuntu/heir')
     working_dir = get_absolute_path('/home/ubuntu/simplemlir')
-    input_mlir = get_absolute_path('handwritten_matmul_flat.mlir')
+    input_mlir = get_absolute_path(args.input_mlir)
 
     # Change to heir directory
     os.chdir(heir_dir)
