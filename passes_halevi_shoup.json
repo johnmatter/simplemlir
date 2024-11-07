@@ -1,0 +1,40 @@
+{
+    "passes": [
+        {
+            "name": "heir-opt secretize",
+            "command": "bazel run",
+            "args": [
+                "--action_env=CC=$(which gcc)",
+                "//tools:heir-opt --",
+                "--secretize"
+            ]
+        },
+        {
+            "name": "heir-opt linalg to tensor ext",
+            "command": "bazel run",
+            "args": [
+                "--action_env=CC=$(which gcc)",
+                "//tools:heir-opt --",
+                "--linalg-to-tensor-ext"
+            ]
+        },
+        {
+            "name": "heir-opt secret generic absorb constants",
+            "command": "bazel run",
+            "args": [
+                "--action_env=CC=$(which gcc)",
+                "//tools:heir-opt --",
+                "--secret-generic-absorb-constants"
+            ]
+        },
+        {
+            "name": "heir-opt secret to ckks",
+            "command": "bazel run",
+            "args": [
+                "--action_env=CC=$(which gcc)",
+                "//tools:heir-opt --",
+                "--secret-to-ckks=\"poly-mod-degree=4\""
+            ]
+        }
+    ]
+}
