@@ -11,12 +11,12 @@ def print_step_name(step_name):
         line = '-' * len(step_name)
         print(f"\n{line}\n{step_name}\n{line}\n")
 
-def run_command(command, args, working_dir, input_mlir, index, step_name):
+def run_command(command, args, working_dir, input_mlir, index, step_name, extension='mlir'):
     # Remove spaces and invalid characters from step_name
     step_name = step_name.replace(" ", "_").replace("-", "_")
     
     # Format arguments and add output redirection
-    output_file = os.path.join(working_dir, f"{index:02d}_{step_name}.mlir")
+    output_file = os.path.join(working_dir, f"{index:02d}_{step_name}.{extension}")
     error_file = os.path.join(working_dir, f"{index:02d}_{step_name}.err")
     
     # Correct the command to have a single output redirection
@@ -60,21 +60,43 @@ def main():
         # Print the step name with index prefix
         print_step_name(f"( {index + 1} ) {pass_info['name']}")
 
-        # Run the pass
-        output_mlir = run_command(pass_info['command'], pass_info['args'], working_dir, input_mlir, index+1, pass_info['name'])
+        if 'outputs' in pass_info:
+            # Handle multiple outputs case
+            for output in pass_info['outputs']:
+                run_command(
+                    pass_info['command'],
+                    output['args'],
+                    working_dir,
+                    input_mlir,
+                    index+1,
+                    f"{pass_info['name']}_{output['extension']}",
+                    extension=output['extension']
+                )
+            # Don't continue the pipeline after generating final C++ outputs
+            break
+        else:
+            # Regular MLIR pass
+            output_mlir = run_command(
+                pass_info['command'],
+                pass_info['args'],
+                working_dir,
+                input_mlir,
+                index+1,
+                pass_info['name']
+            )
 
-        # Check if the output file differs from the input file
-        if input_mlir.endswith('.mlir'):
-            with open(input_mlir, 'r') as f:
-                input_content = f.read()
-            with open(output_mlir, 'r') as f:
-                output_content = f.read()
-            if input_content == output_content:
-                print(f"Output file {output_mlir} is identical to input file {input_mlir}")
-                break
+            # Check if the output file differs from the input file
+            if input_mlir.endswith('.mlir'):
+                with open(input_mlir, 'r') as f:
+                    input_content = f.read()
+                with open(output_mlir, 'r') as f:
+                    output_content = f.read()
+                if input_content == output_content:
+                    print(f"Output file {output_mlir} is identical to input file {input_mlir}")
+                    break
 
-        # Update input_mlir for the next pass
-        input_mlir = output_mlir
+            # Update input_mlir for the next pass
+            input_mlir = output_mlir
 
 
 if __name__ == "__main__":
